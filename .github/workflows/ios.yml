@@ -1,0 +1,43 @@
+# Облачная сборка на macOS-серверах GitHub (бесплатно для публичных и в рамках лимита для приватных репозиториев).
+# Результат: проверка компиляции + неподписанный PhotoProof-unsigned.ipa во вкладке Actions → Artifacts.
+# Этот .ipa устанавливается на iPhone с Windows через Sideloadly (см. README.md, раздел «Установка»).
+name: iOS build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Установить XcodeGen
+        run: brew install xcodegen
+
+      - name: Сгенерировать Xcode-проект
+        run: xcodegen generate
+
+      - name: Сборка для iPhone (без подписи)
+        run: |
+          set -o pipefail
+          xcodebuild -project PhotoProof.xcodeproj -scheme PhotoProof \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/device \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+
+      - name: Упаковать .ipa
+        run: |
+          mkdir -p Payload
+          cp -R build/device/Build/Products/Release-iphoneos/PhotoProof.app Payload/
+          zip -qry PhotoProof-unsigned.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PhotoProof-unsigned-ipa
+          path: PhotoProof-unsigned.ipa
+          retention-days: 30

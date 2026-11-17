@@ -1,0 +1,16 @@
+# Генерируется XcodeGen из project.yml
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+build/
+Payload/
+*.ipa
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+.DS_Store
+Thumbs.db
